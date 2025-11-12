@@ -71,4 +71,36 @@ kubectl port-forward --address 0.0.0.0 svc/argocd-server -n argocd 8080:443
 # get the initial admin password
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 
+#connect argocd cli with the server
 
+argocd login localhost:8080
+
+# to change the password
+
+argocd account update-password
+
+# adding new cluster to argocd
+
+argocd cluster add k3d-dev-cluster --name dev-cluster # here k3d-dev-cluster is actually the kubectl context
+
+# list current projects in argocd
+
+argocd proj list
+
+# to list clusters
+argocd cluster list
+
+# to list repos connected
+argocd repo list
+
+# to list apps
+argocd app list
+
+# to add a new project in argocd
+argocd proj create dev-argocd -d https://172.31.6.250:34005,default -s https://github.com/santhoshkumarasamy/argo-cd-learning
+
+# to add repo source to a project
+
+argocd proj add-source dev-argocd https://github.com/santhoshkumarasamy/argo-cd-learning # name of the project and url of the repo
+
+~~~
