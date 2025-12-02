@@ -32,6 +32,9 @@ scrape_configs:
     metrics_path:  '/prometheus/metrics'                <--- this updated cause we are exposing prometheus in /prometheus
     static_configs:
       - targets: ['localhost:9090']
+    basic_auth:                                         <--- this is for authenticating prometheus endpoint with the user we created
+      username: 'admin'
+      password: 'password'
 
   - job_name: node                                      <--- this is node exporter config
     static_configs:
