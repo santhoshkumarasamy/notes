@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ansible Notes</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --bg: #f4f7fb;
@@ -174,72 +173,235 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="hero">
-            <div class="badge">Ansible Quick Start Guide</div>
-            <h1>Ansible Notes</h1>
-            <p>A simple guide to configuring SSH authentication and creating your first Ansible inventory.</p>
+
+<div class="container">
+
+    <div class="hero">
+        <span class="badge">DevOps • Automation</span>
+        <h1>Ansible Notes</h1>
+        <p>A quick reference covering password-less SSH setup, inventories, ad-hoc commands, playbooks, and roles.</p>
+    </div>
+
+    <div class="section">
+        <h2>🔐 Configuring Password-Less SSH</h2>
+
+        <p>
+            Password-less authentication in Ansible is achieved using SSH key pairs instead of passwords.
+            Generate an SSH key and configure Ansible to use the private key.
+        </p>
+
+<pre><code>ssh-keygen -t ed25519 -a 100 -f ~/.ssh/my-server-key -C "prod-server"</code></pre>
+
+        <div class="tip">
+            <strong>Tip:</strong> Copy the generated public key
+            (<code>my-server-key.pub</code>) to the
+            <code>~/.ssh/authorized_keys</code> file on the target server.
         </div>
-        <div class="section">
-            <h2>🔐 Configure Password-less SSH</h2>
-            <p> This isn't truly <strong>password-less authentication</strong>. Instead, you'll generate an SSH key pair
-                and configure Ansible to authenticate using the private key. </p>
-            <h3>Generate an SSH Key</h3>
-            <pre><code>ssh-keygen -t ed25519 -a 100 -f ~/.ssh/my-server-key -C "prod-server"</code></pre>
-            <div class="tip"> <strong>Next Step:</strong> Copy the generated public key (<code>my-server-key.pub</code>)
-                to the <strong>authorized_keys</strong> file on the target server. </div>
+    </div>
+
+    <div class="section">
+
+        <h2>⚙️ Installing Ansible</h2>
+
+<pre><code>python3 -m pip install ansible</code></pre>
+
+        <div class="note">
+            If <span class="inline">pip</span> is not installed, install it before installing Ansible.
         </div>
-        <div class="section">
-            <h2>⚙️ Install Ansible</h2>
-            <p>Install Ansible using Python's package manager.</p>
-            <pre><code>python3 -m pip install ansible</code></pre>
-            <div class="note"> <strong>Note:</strong> If <span class="inline">pip</span> is not installed, install it
-                before running the command above. </div>
-        </div>
-        <div class="section">
-            <h2>📁 Creating an Inventory File</h2>
-            <p> Ansible supports inventory files in both <strong>INI</strong> and <strong>YAML</strong> formats. </p>
-            <p> This guide recommends using <strong>YAML</strong> because it is cleaner and easier to maintain. </p>
-            <h3>Inventory Structure</h3>
-            <pre><code class="language-yaml">
-all:
+
+    </div>
+
+    <div class="section">
+
+        <h2>📦 Creating an Inventory File</h2>
+
+        <p>
+            Ansible inventories can be written in either
+            <strong>INI</strong> or <strong>YAML</strong> format.
+            YAML is generally easier to read and maintain.
+        </p>
+
+        <h3>Inventory Structure</h3>
+
+<pre><code>all:
     vars:
     children:
         [group]:
-        vars:
-        hosts:
-            [your-own-hostname]:
-</code></pre>
-        </div>
-        <div class="section">
-            <h2>🖥️ Sample Inventory</h2>
-            <p> Below is an example inventory for a group named <strong>webservers</strong>. </p>
-            <pre><code class="language-yaml">
-all:
-    children:
-        webservers:
-        vars:
-            ansible_ssh_private_key_file: /home/ec2-user/.ssh/my-server-key
-            ansible_user: ec2-user
+            vars:
+            hosts:
+                [your own hostname]</code></pre>
 
-        hosts:
-            host1:
-            ansible_host: 172.31.20.235
-            </code></pre>  
-        </div>
-        <div class="section">
-            <h2>✅ Summary</h2>
-            <ul>
-                <li>Generate an SSH key pair.</li>
-                <li>Copy the public key to the remote server.</li>
-                <li>Install Ansible using pip.</li>
-                <li>Create an inventory file (preferably YAML).</li>
-                <li>Specify the SSH user and private key in the inventory.</li>
-                <li>Run Ansible playbooks using the configured inventory.</li>
-            </ul>
-        </div>
-        <div class="footer"> Created from your Ansible notes • Clean Documentation Template </div>
+        <h3>Example Inventory</h3>
+
+<pre><code>all:
+  children:
+    webservers:
+      vars:
+        ansible_ssh_private_key_file: /home/ec2-user/.ssh/my-server-key
+        ansible_user: ec2-user
+      hosts:
+        host1:
+          ansible_host: 172.31.20.235</code></pre>
+
+        <h3>Verify Inventory</h3>
+
+<pre><code>ansible-inventory -i inventory.yaml --graph
+ansible-inventory -i inventory.yaml --list</code></pre>
+
     </div>
-</body>
 
+    <div class="section">
+
+        <h2>💻 Ad-hoc Commands</h2>
+
+        <p>
+            Ad-hoc commands allow you to execute one-time tasks without writing a playbook.
+        </p>
+
+<pre><code>ansible -i inventory.yaml -m ping all
+ansible -i inventory.yaml -m shell -a "ls /" all</code></pre>
+
+    </div>
+
+    <div class="section">
+
+        <h2>📖 Playbooks</h2>
+
+        <p>
+            A Playbook is a YAML file that defines a series of tasks to execute on managed hosts.
+            Each play maps a group of hosts to a list of automation tasks.
+        </p>
+
+        <h3>Sample Playbook</h3>
+
+<pre><code>---
+
+- hosts: webservers
+  become: yes
+
+  tasks:
+
+    - name: Install apache httpd
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+        update_cache: yes
+
+    - name: Copy sample file
+      ansible.builtin.copy:
+        src: ./index.html
+        dest: /var/www/html
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Start the service
+      ansible.builtin.service:
+        name: httpd
+        state: started</code></pre>
+
+        <h3>Run a Playbook</h3>
+
+<pre><code>ansible-playbook -i inventory.yaml httpd-play/apache-play.yaml</code></pre>
+
+    </div>
+
+    <div class="section">
+
+        <h2>🧩 Roles</h2>
+
+        <p>
+            As playbooks grow, managing everything in a single file becomes difficult.
+            <strong>Roles</strong> provide a standardized directory structure to organize reusable automation.
+        </p>
+
+        <h3>Create a Role</h3>
+
+<pre><code>ansible-galaxy role init httpd-test</code></pre>
+
+        <h3>Generated Directory Structure</h3>
+
+<pre><code>httpd-test
+├── README.md
+├── defaults
+│   └── main.yml
+├── files
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── tasks
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml</code></pre>
+
+        <h3>Role Directories</h3>
+
+        <ul>
+            <li><strong>defaults</strong> – Default variables for the role.</li>
+            <li><strong>files</strong> – Static files copied directly to managed hosts.</li>
+            <li><strong>handlers</strong> – Triggered tasks such as restarting services.</li>
+            <li><strong>meta</strong> – Role metadata and dependencies.</li>
+            <li><strong>tasks</strong> – Main list of tasks executed by the role.</li>
+            <li><strong>templates</strong> – Jinja2 templates for dynamic configuration files.</li>
+            <li><strong>vars</strong> – Variables specific to the role.</li>
+        </ul>
+
+        <hr>
+
+        <h3>Main Playbook</h3>
+
+<pre><code>- hosts: webservers
+  become: yes
+
+  roles:
+    - httpd-test</code></pre>
+
+        <h3>tasks/main.yml</h3>
+
+<pre><code>---
+
+- name: Install apache httpd
+  ansible.builtin.yum:
+    name: httpd
+    state: present
+    update_cache: yes
+
+- name: Copy sample file
+  ansible.builtin.copy:
+    src: files/index.html
+    dest: /var/www/html
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - restart_httpd</code></pre>
+
+        <h3>handlers/main.yml</h3>
+
+<pre><code>---
+
+- name: start_httpd
+  ansible.builtin.service:
+    name: httpd
+    state: started
+
+- name: restart_httpd
+  ansible.builtin.service:
+    name: httpd
+    state: restarted</code></pre>
+
+    </div>
+
+    <div class="footer">
+        Ansible Quick Reference • Inventory • Playbooks • Roles • SSH Automation
+    </div>
+
+</div>
+
+</body>
 </html>

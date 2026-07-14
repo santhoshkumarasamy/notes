@@ -14,7 +14,6 @@ Copy the public key and add it to the Authorized keys file in the target server.
 
 ```shell
 python3 -m pip install ansible
-
 ```
 
 Note: If you dont have pip, install it first
@@ -103,3 +102,97 @@ ansible-playbook -i inventory.yaml httpd-play/apache-play.yaml
 
 ## Roles
 
+### Ansible Galaxy
+
+So now, so far we played around and created plabook & adhoc commands, but if you got more tasks to be run and you want to reuse it this will get messy to be in a single file. 
+
+To help with that we have Roles. It provides sttuctural way to maintain all these
+
+```shell
+ansible-galaxy role init httpd-test
+```
+The above command creates you a skeleton sturcture for the role
+
+```
+httpd-test
+├── README.md
+├── defaults
+│   └── main.yml
+├── files
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── tasks
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+8 directories, 8 files
+```
+
+Deafaults ----> Are default variables which can be used accross the role
+
+Files ----> You static content files
+
+Handlers ---> Are kind of function, you can call them repeatedly based on action
+
+meta ----> Metadata about the role
+
+tasks ----> Your list of tasks
+
+templates ----> You use templates(jinja2) when you want to dynamically edit a file based on run time and input vars
+
+vars ----> This is the variables of your role
+
+
+#### Now lets restructure our previous playbook into role
+
+```yaml
+# main.yaml
+
+- hosts: webservers
+  become: y
+  roles:
+    - httpd-test
+```
+
+```yaml
+# httpd-test/tasks/main.yaml
+
+---
+# tasks file for httpd-test
+
+- name: Install apache httpd
+  ansible.builtin.yum:
+    name: httpd
+    state: present
+    update_cache: yes
+- name: copy the sample file
+  ansible.builtin.copy:
+    src: files/index.html
+    dest: /var/www/html
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - restart_httpd
+```
+
+```yaml
+# httpd-test/handlers/main.yaml
+---
+# handlers file for httpd-test
+- name : start_httpd
+  ansible.builtin.service:
+    name: httpd
+    state: started
+- name : restart_httpd
+  ansible.builtin.service:
+    name: httpd
+    state: restarted
+```
