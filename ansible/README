@@ -1,0 +1,105 @@
+# Ansible Notes
+
+
+## Configuring Password-Less Setup
+Not literally Password less we will create ssh keys and add configuration in ansible to use the secret key generated.
+
+```
+ssh-keygen -t ed25519 -a 100 -f ~/.ssh/my-server-key -C "prod-server"
+```
+
+Copy the public key and add it to the Authorized keys file in the target server.
+
+## Configure Ansible
+
+```shell
+python3 -m pip install ansible
+
+```
+
+Note: If you dont have pip, install it first
+
+## First Steps
+### Creating a inventory file
+
+- You can create file in both ini format and yaml
+- I prefer yaml
+
+Here there is a format which needs to be followed for the inventory file. do check that.
+
+```yaml
+all:
+    vars:
+    children:
+        [group]:
+            vars:
+            hosts:
+                [your own hostname]
+```
+
+Sample
+```yaml
+
+all:
+  children:
+    webservers:
+      vars:
+        ansible_ssh_private_key_file : /home/ec2-user/.ssh/my-server-key
+        ansible_user: ec2-user
+      hosts:
+        host1:
+          ansible_host: 172.31.20.235
+```
+
+To verify your inventory file
+
+```shell
+ansible-inventory -i inventory.yaml --graph
+ansible-inventory -i inventory.yaml --list # this more nicer
+```
+
+### Adhoc Commands
+
+You can check more on the official website
+https://docs.ansible.com/projects/ansible/latest/command_guide/intro_adhoc.html
+
+```shell
+ansible -i inventory.yaml -m ping all
+ansible -i inventory.yaml -m shell -a "ls /" all
+```
+
+
+## Now lets see about playbooks
+
+A Playbook is a YAML file that defines a series of actions to be executed on managed nodes. It contains one or more "plays" that map groups of hosts to roles
+
+- Sample Playbook
+```yaml
+---
+
+- hosts: webservers
+  become: y
+  tasks:
+    - name: Install apache httpd
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+        update_cache: yes
+    - name: copy the sample file
+      ansible.builtin.copy:
+        src: ./index.html
+        dest: /var/www/html
+        owner: root
+        group: root
+        mode: '0644'
+    - name : Start the service
+      ansible.builtin.service:
+        name: httpd
+```
+
+```shell
+ansible-playbook -i inventory.yaml httpd-play/apache-play.yaml
+```
+
+## Roles
+

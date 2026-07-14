@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ansible Notes</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #0f172a;
+            --success: #16a34a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 45px;
+            border-radius: 18px;
+            margin-bottom: 35px;
+            box-shadow: 0 15px 35px rgba(37, 99, 235, .25);
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            opacity: .95;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, .05);
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            margin-top: 25px;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        ul {
+            margin-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .note {
+            background: #fff8db;
+            border-left: 5px solid #f59e0b;
+            padding: 18px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .tip {
+            background: #ecfdf5;
+            border-left: 5px solid var(--success);
+            padding: 18px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            overflow: auto;
+            margin-top: 15px;
+            font-size: 15px;
+        }
+
+        code {
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .inline {
+            background: #eef2ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #1d4ed8;
+            font-family: "JetBrains Mono", monospace;
+            font-size: .95em;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            margin-top: 40px;
+            font-size: .9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: .85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 25px 0;
+        }
+
+        @media(max-width:768px) {
+            .hero {
+                padding: 30px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .section {
+                padding: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="hero">
+            <div class="badge">Ansible Quick Start Guide</div>
+            <h1>Ansible Notes</h1>
+            <p>A simple guide to configuring SSH authentication and creating your first Ansible inventory.</p>
+        </div>
+        <div class="section">
+            <h2>🔐 Configure Password-less SSH</h2>
+            <p> This isn't truly <strong>password-less authentication</strong>. Instead, you'll generate an SSH key pair
+                and configure Ansible to authenticate using the private key. </p>
+            <h3>Generate an SSH Key</h3>
+            <pre><code>ssh-keygen -t ed25519 -a 100 -f ~/.ssh/my-server-key -C "prod-server"</code></pre>
+            <div class="tip"> <strong>Next Step:</strong> Copy the generated public key (<code>my-server-key.pub</code>)
+                to the <strong>authorized_keys</strong> file on the target server. </div>
+        </div>
+        <div class="section">
+            <h2>⚙️ Install Ansible</h2>
+            <p>Install Ansible using Python's package manager.</p>
+            <pre><code>python3 -m pip install ansible</code></pre>
+            <div class="note"> <strong>Note:</strong> If <span class="inline">pip</span> is not installed, install it
+                before running the command above. </div>
+        </div>
+        <div class="section">
+            <h2>📁 Creating an Inventory File</h2>
+            <p> Ansible supports inventory files in both <strong>INI</strong> and <strong>YAML</strong> formats. </p>
+            <p> This guide recommends using <strong>YAML</strong> because it is cleaner and easier to maintain. </p>
+            <h3>Inventory Structure</h3>
+            <pre><code class="language-yaml">
+all:
+    vars:
+    children:
+        [group]:
+        vars:
+        hosts:
+            [your-own-hostname]:
+</code></pre>
+        </div>
+        <div class="section">
+            <h2>🖥️ Sample Inventory</h2>
+            <p> Below is an example inventory for a group named <strong>webservers</strong>. </p>
+            <pre><code class="language-yaml">
+all:
+    children:
+        webservers:
+        vars:
+            ansible_ssh_private_key_file: /home/ec2-user/.ssh/my-server-key
+            ansible_user: ec2-user
+
+        hosts:
+            host1:
+            ansible_host: 172.31.20.235
+            </code></pre>  
+        </div>
+        <div class="section">
+            <h2>✅ Summary</h2>
+            <ul>
+                <li>Generate an SSH key pair.</li>
+                <li>Copy the public key to the remote server.</li>
+                <li>Install Ansible using pip.</li>
+                <li>Create an inventory file (preferably YAML).</li>
+                <li>Specify the SSH user and private key in the inventory.</li>
+                <li>Run Ansible playbooks using the configured inventory.</li>
+            </ul>
+        </div>
+        <div class="footer"> Created from your Ansible notes • Clean Documentation Template </div>
+    </div>
+</body>
+
+</html>
