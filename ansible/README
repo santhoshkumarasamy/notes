@@ -196,3 +196,52 @@ vars ----> This is the variables of your role
     name: httpd
     state: restarted
 ```
+
+#### Lets see about using/importing a role from ansible galaxy page
+
+
+To install a role, you run the below command
+
+```shell
+ansible-galaxy role install geerlingguy.docker
+```
+
+ansible galaxy can also used for collections.
+so once you install this where does the files go ?---> you might seen it in the output lol 
+
+```
+~/.ansible/roles/
+```
+
+this were it goes
+
+
+okay now how do you use it in your play book
+
+simple just give the name of it  (name == rolenamespace.actual_role_name)
+
+
+```yaml
+- hosts: webservers
+  become: y
+  roles:
+    - geerlingguy.docker
+```
+
+
+#### Collection
+
+This kind of like roles but for calling apis instead of accessing linux/windows commands
+
+Lets test it with aws
+
+```shell
+ansible-galaxy collection install amazon.aws
+```
+
+you might have this already installed 
+
+we also need boto3 which is the Amazon SDK this is a dependency for the AWS Collections
+```shell
+python3 -m pip install boto3
+```
