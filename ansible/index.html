@@ -396,7 +396,127 @@ ansible -i inventory.yaml -m shell -a "ls /" all</code></pre>
     state: restarted</code></pre>
 
     </div>
+<div class="section">
 
+    <h2>📌 Using AWS Collections with Ansible Vault</h2>
+
+    <p>
+        Collections are similar to roles, but they are used for interacting with APIs instead of Linux or Windows commands.
+        In this example, we'll use the AWS collection.
+    </p>
+
+    <h3>Install the AWS Collection</h3>
+
+    <p>
+        Install the AWS collection using Ansible Galaxy.
+    </p>
+
+<pre><code>ansible-galaxy collection install amazon.aws</code></pre>
+
+    <p>
+        You might already have this collection installed.
+    </p>
+
+    <h3>Install boto3</h3>
+
+    <p>
+        The AWS collection requires the Amazon SDK (<strong>boto3</strong>) as a dependency.
+    </p>
+
+<pre><code>python3 -m pip install boto3</code></pre>
+
+    <hr>
+
+    <h3>Store AWS Credentials Securely</h3>
+
+    <p>
+        AWS requires authentication using an Access Key and Secret Key.
+        While you can pass them as variables, this is insecure.
+        Instead, use Ansible Vault to securely store them.
+    </p>
+
+    <p>
+        First, generate a random password for the vault.
+    </p>
+
+<pre><code>openssl rand -base64 2048 &gt; vault.pass</code></pre>
+
+    <p>
+        Create the encrypted vault file using the password.
+    </p>
+
+<pre><code>ansible-vault create pass.yaml --vault-password-file vault.pass</code></pre>
+
+    <p>
+        The editor will open. Add your variables in YAML format, then save and close it.
+        The generated file will be encrypted.
+    </p>
+
+    <p>
+        To decrypt the vault:
+    </p>
+
+<pre><code>ansible-vault decrypt pass.yaml --vault-password-file vault.pass</code></pre>
+
+    <p>
+        To encrypt it again:
+    </p>
+
+<pre><code>ansible-vault encrypt pass.yaml --vault-password-file vault.pass</code></pre>
+
+    <hr>
+
+    <h3>Create the Playbook</h3>
+
+    <p>
+        Now that the prerequisites are ready, create a playbook to collect EC2 instance information.
+    </p>
+
+<pre><code>---
+- hosts: localhost
+  connection: local
+
+  vars_files:
+    - pass.yaml
+
+  tasks:
+    - name: Start the EC2 instance
+      amazon.aws.ec2_instance_info:
+        region: us-east-1
+        access_key: "{{ aws_access_key }}"
+        secret_key: "{{ aws_secret_key }}"
+        instance_ids:
+          - i-0efad667e6ea71f22</code></pre>
+
+    <hr>
+
+    <h3>Run the Playbook</h3>
+
+    <p>
+        Running the playbook without the vault password results in the following error.
+    </p>
+
+<pre><code>ansible-playbook ec2-create.yaml
+
+# [WARNING]: No inventory was parsed, only implicit localhost is available
+# [WARNING]: provided hosts list is empty, only localhost is available.
+# ERROR! Attempting to decrypt but no vault secrets found</code></pre>
+
+    <p>
+        Pass the vault password file when running the playbook.
+    </p>
+
+<pre><code>ansible-playbook ec2-create.yaml --vault-password-file vault.pass</code></pre>
+
+    <p>
+        The playbook will run successfully, but it won't display any output because it is only collecting information.
+    </p>
+
+    <p>
+        We can improve the playbook later by using a variable to print the collected details to the console.
+    </p>
+
+</div>
     <!-- ----------------------- -->
     <div class="footer">
         Ansible Quick Reference • Inventory • Playbooks • Roles • SSH Automation

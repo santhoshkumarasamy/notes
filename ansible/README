@@ -245,3 +245,86 @@ we also need boto3 which is the Amazon SDK this is a dependency for the AWS Coll
 ```shell
 python3 -m pip install boto3
 ```
+
+
+Now that we installed everything we can go ahead and use it but but
+this collection is going to need authentication method 
+with aws it secret keys right
+
+so now the question is how to add the keys to ansible
+
+we can pass it as variables to the task
+
+but this is insecure
+
+we need a way to securely access it
+
+thats were ansible vlauts come it
+
+with vaults you create a password to encryt and decrypt the vault and the vault itself
+
+```shell
+# create a random password-- here is a base64 for example
+
+openssl rand -base64 2048 > vault.pass
+```
+
+now that we have the password, let setup a vault file with that password
+
+```shell
+ansible-vault create pass.yaml --vault-password-file vault.pass
+```
+
+when you run the above command it will open up a editor to add your variables in yaml format
+
+save and close it 
+
+if you view the generate file it will encrypted 
+
+to decrypt it
+```shell
+ansible-vault decrypt pass.yaml --vault-password-file vault.pass
+```
+eo encrypt it again
+```shell
+ansible-vault encrypt pass.yaml --vault-password-file vault.pass
+```
+now that we have pre-requisistes in place let create a aws resource
+
+```yaml
+---
+
+- hosts: localhost
+  connection: local  #here it is local cause we executing it in the same machine
+  vars_files:
+    - pass.yam
+  tasks:
+    - name : start the ec2 instance
+      amazon.aws.ec2_instance_info:
+        region: 'us-east-1'
+        access_key: "{{aws_access_key}}"
+        secret_key: "{{aws_secret_key}}
+        instance_ids:
+          - i-0efad667e6ea71f22
+```
+
+you get the below error if you try to run it the way we ran it before
+
+```shell
+ansible-playbook ec2-create.yaml
+# [WARNING]: No inventory was parsed, only implicit localhost is available
+# [WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
+# ERROR! Attempting to decrypt but no vault secrets found
+```
+now how do i pass the password for the vault
+
+same way you do it before
+
+```shell
+ansible-playbook ec2-create.yaml --vault-password-file vault.pass
+```
+
+now this wont give you any output it just run without any problems lol
+this is for collecting details 
+
+we need to improve this playbook and make use of variable to print the details in the console
