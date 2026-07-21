@@ -517,6 +517,236 @@ ansible -i inventory.yaml -m shell -a "ls /" all</code></pre>
     </p>
 
 </div>
+
+<div class="section">
+
+    <h2>🔁 Loops in Ansible</h2>
+
+    <p>
+        Loops allow you to execute the same task multiple times using different values.
+        Instead of writing identical tasks repeatedly, you can define a list of values
+        and iterate through them using the <span class="inline">loop</span> keyword.
+    </p>
+
+    <div class="tip">
+        <strong>Tip:</strong>
+        Store repeated values in a variable file and iterate over them using
+        <span class="inline">loop</span>. This keeps playbooks clean and reusable.
+    </div>
+
+    <div class="note">
+        <strong>Note:</strong>
+        Each iteration is accessible through the special variable
+        <span class="inline">item</span>.
+    </div>
+
+    <div class="warning">
+        <strong>Warning:</strong>
+        When creating multiple cloud resources, ensure that each iteration has a unique
+        attribute (such as a name or tag). Otherwise, Ansible's idempotent behavior may
+        treat them as the same resource.
+    </div>
+
+    <h3>Main Playbook</h3>
+
+    <p>
+        Instead of specifying AWS credentials inside every task, they can be configured
+        once using environment variables. The values are securely loaded from an
+        Ansible Vault file.
+    </p>
+
+<pre><code>---
+- hosts: localhost
+  connection: local
+
+  vars_files:
+    - pass.yaml
+
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_DEFAULT_REGION: "us-east-1"
+
+  roles:
+    - project</code></pre>
+
+    <h3>Task Using Loop</h3>
+
+    <p>
+        The task below creates (or manages) EC2 instances by looping through each
+        item defined in the variable <span class="inline">instances</span>.
+    </p>
+
+<pre><code>---
+- name: Start an EC2 instance
+  amazon.aws.ec2_instance:
+    name: "{{ item.env_name }}"
+    vpc_subnet_id: subnet-0bd2c4ee2ee4d0762
+    instance_type: t2.micro
+    security_group: default
+
+    network_interfaces:
+      - assign_public_ip: true
+
+    image_id: "{{ item.ami_id }}"
+
+    tags:
+      Environment: "{{ item.env_name }}"
+
+    state: terminated
+
+  loop: "{{ instances }}"</code></pre>
+
+    <h3>Variable File</h3>
+
+    <p>
+        Each list item contains the values required during one iteration of the loop.
+    </p>
+
+<pre><code>---
+instances:
+  - ami_id: ami-0b826bb6d96d2afe4
+    env_name: dev
+
+  - ami_id: ami-0b826bb6d96d2afe4
+    env_name: test
+
+  - ami_id: ami-0b826bb6d96d2afe4
+    env_name: prod</code></pre>
+
+    <h3>Why include <span class="inline">env_name</span>?</h3>
+
+    <p>
+        You may wonder why the environment name is included when all instances use the
+        same AMI ID.
+    </p>
+
+    <p>
+        Consider the following variable:
+    </p>
+
+<pre><code>ami_id:
+  - ami-0b826bb6d96d2afe4
+  - ami-0b826bb6d96d2afe4
+  - ami-0b826bb6d96d2afe4</code></pre>
+
+    <p>
+        If only the AMI ID is supplied, every loop iteration requests an identical
+        resource. Since Ansible is <strong>idempotent</strong>, it compares the desired
+        state with the existing state and determines that the resource already exists.
+        As a result, it does not create multiple identical instances.
+    </p>
+
+    <div class="note">
+        <strong>Note:</strong>
+        Adding a unique value such as the instance name, tags, or environment ensures
+        that every iteration represents a different resource.
+    </div>
+
+    <table>
+        <tr>
+            <th>Variable</th>
+            <th>Purpose</th>
+        </tr>
+
+        <tr>
+            <td>ami_id</td>
+            <td>AMI used to launch the EC2 instance.</td>
+        </tr>
+
+        <tr>
+            <td>env_name</td>
+            <td>Provides a unique name and tag for each instance.</td>
+        </tr>
+
+        <tr>
+            <td>item</td>
+            <td>Represents the current object during each loop iteration.</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h2>⚡ Conditions in Ansible</h2>
+
+    <p>
+        Conditions allow a task to execute only when a specific expression evaluates
+        to true. The keyword used for conditional execution is
+        <span class="inline">when</span>.
+    </p>
+
+    <div class="tip">
+        <strong>Tip:</strong>
+        Conditions are commonly used with facts gathered from managed hosts.
+    </div>
+
+    <div class="note">
+        <strong>Note:</strong>
+        Ansible facts are automatically collected at the beginning of a play unless
+        fact gathering is disabled.
+    </div>
+
+    <div class="warning">
+        <strong>Warning:</strong>
+        Ensure the condition matches the intended operating system or host. An
+        incorrect condition may prevent the task from executing.
+    </div>
+
+    <h3>Example Using <span class="inline">when</span></h3>
+
+<pre><code>---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Print gathered facts
+      ansible.builtin.debug:
+        var: ansible_facts
+
+    - name: Stop the server if it is RedHat
+      ansible.builtin.command: /sbin/shutdown -t now
+      when:
+        ansible_facts.os_family == "RedHat"</code></pre>
+
+    <p>
+        In this example, the shutdown command runs only if the managed host belongs
+        to the <span class="inline">RedHat</span> operating system family.
+    </p>
+
+    <ul>
+        <li><strong>when</strong> evaluates a Boolean expression.</li>
+        <li>The task executes only if the expression is true.</li>
+        <li>Facts such as <span class="inline">ansible_facts.os_family</span> are commonly used in conditions.</li>
+    </ul>
+
+    <table>
+        <tr>
+            <th>Keyword</th>
+            <th>Description</th>
+        </tr>
+
+        <tr>
+            <td>loop</td>
+            <td>Repeats a task for each item in a list.</td>
+        </tr>
+
+        <tr>
+            <td>item</td>
+            <td>Current value during a loop iteration.</td>
+        </tr>
+
+        <tr>
+            <td>when</td>
+            <td>Executes a task only when the specified condition is true.</td>
+        </tr>
+
+        <tr>
+            <td>ansible_facts</td>
+            <td>System information collected from managed hosts.</td>
+        </tr>
+    </table>
+
+</div>
     <!-- ----------------------- -->
     <div class="footer">
         Ansible Quick Reference • Inventory • Playbooks • Roles • SSH Automation

@@ -328,3 +328,88 @@ now this wont give you any output it just run without any problems lol
 this is for collecting details 
 
 we need to improve this playbook and make use of variable to print the details in the console
+
+### Loops
+
+Within playbook task you can use loops 
+below is a example to use a variable to loop around
+```yaml
+#Main playbook
+---
+- hosts: localhost
+  connection: local
+  vars_files:
+    - pass.yaml
+  environment:
+    AWS_ACCESS_KEY_ID: "{{aws_access_key}}"
+    AWS_SECRET_ACCESS_KEY: "{{aws_secret_key}}"
+    AWS_DEFAULT_REGION: "us-east-1"
+  roles:
+    - project
+```
+
+```yaml
+---
+# tasks file for project
+- name: start an instance with a public IP address
+  amazon.aws.ec2_instance:
+    name:  "{{item.env_name}}"
+    vpc_subnet_id: subnet-0bd2c4ee2ee4d0762
+    instance_type: t2.micro
+    security_group: default
+    network_interfaces:
+      - assign_public_ip: true
+    image_id: "{{item.ami_id}}"
+    tags:
+      Environment: "{{item.env_name}}"
+    state: terminated
+  loop: "{{ instances }}"
+```
+
+the corresponding var is
+```yaml
+---
+# vars file for project
+#
+instances:
+  - ami_id: ami-0b826bb6d96d2afe4
+    env_name: dev
+  - ami_id: ami-0b826bb6d96d2afe4
+    env_name: test
+  - ami_id: ami-0b826bb6d96d2afe4
+    env_name: prod
+```
+
+Note how i configured the AWS secrets
+Instead of adding the variables in all the task for the collection i have configured as an environment variable and passed the ansible vault 
+
+you might be wondering if i dont have env name in the option what if i had the below var alone
+
+```yaml
+ami_id:
+  - ami-0b826bb6d96d2afe4
+  - ami-0b826bb6d96d2afe4
+  - ami-0b826bb6d96d2afe4
+```
+
+how will this work
+
+answer is ansible will only create one single instance because ansible is idempotent meaning if a same state already exist then it wont recreate thus making a differenc in each intance makes the difference and creates new instance for each value when looping
+
+## Now lets see about conditions
+
+in ansible you can use "when" keyword and use variables to determine whether a task could get executed or not
+
+```yaml
+- hosts: all
+  become: true
+
+  tasks:
+    - name: print the facts
+      ansible.builtin.debug:
+        var: ansible_facts
+    - name: stop the server if its ubuntu
+      ansible.builtin.command: /sbin/shutdown -t now
+      when:
+        ansible_facts.os_family == "RedHat"
+```
