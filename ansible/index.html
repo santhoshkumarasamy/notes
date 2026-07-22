@@ -796,6 +796,241 @@ instances:
     </table>
 
 </div>
+<div class="section">
+
+    <h2>📌 Error Handling in Ansible</h2>
+
+    <p>
+        By default, if a task fails on a host, Ansible stops executing all the
+        remaining tasks for that host. This is useful because it prevents
+        subsequent tasks from running when a previous step has already failed.
+        However, there are situations where you want Ansible to continue even if
+        a task fails. This is where <span class="inline">ignore_errors</span>
+        becomes useful.
+    </p>
+
+    <div class="tip">
+        <strong>Tip:</strong>
+        Use <span class="inline">ignore_errors: true</span> when a failed task
+        should not stop the remaining tasks from executing.
+    </div>
+
+    <div class="note">
+        <strong>Note:</strong>
+        Even when a task is ignored, Ansible still records the failure. You can
+        access the task result using the <span class="inline">register</span>
+        keyword.
+    </div>
+
+    <div class="warning">
+        <strong>Warning:</strong>
+        Avoid using <span class="inline">ignore_errors</span> everywhere. It can
+        hide real problems if used without proper validation.
+    </div>
+
+    <h3>Continue Execution Even When a Task Fails</h3>
+
+    <p>
+        In the following playbook, Ansible checks whether
+        <span class="inline">tmux</span> is installed by running
+        <span class="inline">tmux -V</span>. If the command fails, Ansible
+        ignores the error and continues to the next task.
+    </p>
+
+<pre><code>---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: make sure tmux is present
+      ansible.builtin.command: "tmux -V"
+      register: output
+      ignore_errors: true
+
+    - name: print the log
+      debug:
+        var: output</code></pre>
+
+    <p>
+        Since the command output is stored in the variable
+        <span class="inline">output</span>, the next task prints all the details
+        including whether the task failed.
+    </p>
+
+    <table>
+        <tr>
+            <th>Keyword</th>
+            <th>Purpose</th>
+        </tr>
+
+        <tr>
+            <td><span class="inline">register</span></td>
+            <td>Stores the output of a task in a variable.</td>
+        </tr>
+
+        <tr>
+            <td><span class="inline">ignore_errors</span></td>
+            <td>Continues executing the remaining tasks even if the current task fails.</td>
+        </tr>
+
+        <tr>
+            <td><span class="inline">debug</span></td>
+            <td>Displays the contents of a variable.</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h3>Install a Package Only if the Previous Task Failed</h3>
+
+    <p>
+        Since the task result is stored using
+        <span class="inline">register</span>, you can use it in a
+        <span class="inline">when</span> condition.
+    </p>
+
+<pre><code>---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: make sure tmux is present
+      ansible.builtin.command: "tmux -V"
+      register: output
+      ignore_errors: true
+
+    - name: print the log
+      debug:
+        var: output
+
+    - name: install tmux if not there
+      ansible.builtin.yum:
+        name: tmux
+        state: latest
+      when:
+        - output.failed</code></pre>
+
+    <p>
+        If <span class="inline">tmux -V</span> fails,
+        <span class="inline">output.failed</span> becomes
+        <span class="inline">true</span>, causing the installation task to run.
+        If the command succeeds, the installation task is skipped.
+    </p>
+
+    <div class="tip">
+        <strong>Tip:</strong>
+        Using <span class="inline">register</span> together with
+        <span class="inline">when</span> is a common pattern for building
+        self-healing playbooks.
+    </div>
+
+    <hr>
+
+    <h2>📌 Conditional Task Failure with <span class="inline">failed_when</span></h2>
+
+    <p>
+        Sometimes a command succeeds, but you still want Ansible to treat it as
+        a failure. This can be done using the
+        <span class="inline">failed_when</span> condition.
+    </p>
+
+<pre><code>---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: is folder available
+      ansible.builtin.command: "ls /tmp"
+      register: output
+      failed_when: true
+      ignore_errors: true
+
+    - name: print the log
+      debug:
+        var: output</code></pre>
+
+    <p>
+        The command <span class="inline">ls /tmp</span> executes successfully,
+        but <span class="inline">failed_when: true</span> forces Ansible to mark
+        the task as failed. Since
+        <span class="inline">ignore_errors</span> is also enabled, execution
+        continues to the next task.
+    </p>
+
+    <div class="note">
+        <strong>Note:</strong>
+        The command output is still available in
+        <span class="inline">output.stdout</span>, even though the task is marked
+        as failed.
+    </div>
+
+    <hr>
+
+    <h3>Ignore Specific Errors Using <span class="inline">failed_when</span></h3>
+
+    <p>
+        You can also use <span class="inline">failed_when</span> to prevent
+        Ansible from failing for expected errors.
+    </p>
+
+<pre><code>---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: is folder available
+      ansible.builtin.command: "ls /tmp/itisnotthere"
+      register: output
+      failed_when: "'No such' not in output.stderr"
+
+    - name: print the log
+      debug:
+        var: output</code></pre>
+
+    <p>
+        The command attempts to list a directory that does not exist.
+        Normally this would fail, but the
+        <span class="inline">failed_when</span> condition tells Ansible that the
+        task should only fail if the text
+        <span class="inline">No such</span> is <strong>not</strong> present in
+        the error message.
+    </p>
+
+    <p>
+        Since the error message contains
+        <span class="inline">No such file or directory</span>, the condition
+        evaluates to <span class="inline">false</span>, so Ansible considers the
+        task successful and continues with the remaining tasks.
+    </p>
+
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>Use Case</th>
+        </tr>
+
+        <tr>
+            <td><span class="inline">ignore_errors</span></td>
+            <td>Continue execution even when a task fails.</td>
+        </tr>
+
+        <tr>
+            <td><span class="inline">register</span></td>
+            <td>Save task output for later use.</td>
+        </tr>
+
+        <tr>
+            <td><span class="inline">when</span></td>
+            <td>Run tasks conditionally based on previous results.</td>
+        </tr>
+
+        <tr>
+            <td><span class="inline">failed_when</span></td>
+            <td>Customize when a task should be considered failed.</td>
+        </tr>
+    </table>
+
+</div>
     <!-- ----------------------- -->
     <div class="footer">
         Ansible Quick Reference • Inventory • Playbooks • Roles • SSH Automation

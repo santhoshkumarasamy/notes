@@ -413,3 +413,135 @@ in ansible you can use "when" keyword and use variables to determine whether a t
       when:
         ansible_facts.os_family == "RedHat"
 ```
+
+## Lets do Error handling
+
+https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_error_handling.html
+
+Let say you have a list of task which needs to be executed on multiple server.
+If the first task fails all the next task will also fail
+
+how do we say continue even if one task fails
+u use error handling
+
+```yaml
+---
+
+- hosts: all
+  become: true
+
+  tasks:
+    - name: make sure tmux is present
+      ansible.builtin.command: "tmux -V"
+      register: output
+      ignore_errors: true
+    - name: print the log
+      debug:
+        var: output
+```
+
+```output
+[ec2-user@ip-172-31-20-55 error-handling]$ ansible-playbook -i ../inventory.yaml main-v2.yaml
+
+PLAY [all] ****************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ****************************************************************************************************************************************************************************************
+[WARNING]: Platform linux on host host1 is using the discovered Python interpreter at /usr/bin/python3.9, but future installation of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-core/2.15/reference_appendices/interpreter_discovery.html for more information.ok: [host1]
+TASK [make sure openssl and openssh is upgraded] **************************************************************************************************************************************************************
+fatal: [host1]: FAILED! => {"changed": false, "cmd": "tmux -V", "msg": "[Errno 2] No such file or directory: b'tmux'", "rc": 2, "stderr": "", "stderr_lines": [], "stdout": "", "stdout_lines": []}
+...ignoring
+
+TASK [print the log] ******************************************************************************************************************************************************************************************
+ok: [host1] => {
+    "output": {
+        "changed": false,
+        "cmd": "tmux -V",
+        "failed": true,
+        "msg": "[Errno 2] No such file or directory: b'tmux'",
+        "rc": 2,
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "",
+        "stdout_lines": []
+    }
+}
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************
+host1                      : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=1
+```
+
+here its checking tmux version and by using "ignore_errors" option to skip to next step if it errors out
+lets do one more thing lets install it if the first step fails
+
+and we also used "register" and "debug" task which new till this topic
+
+this register keyword can be used to store the output of a task
+
+```yaml
+---
+
+- hosts: all
+  become: true
+
+  tasks:
+    - name: make sure tmux is present
+      ansible.builtin.command: "tmux -V"
+      register: output
+      ignore_errors: true
+    - name: print the log
+      debug:
+        var: output
+    - name: install tmux if not there
+      ansible.builtin.yum:
+        name: tmux
+        state: latest
+      when:
+        - output.failed
+```
+
+using when condition: the output variable is checked and based on that the install part will run
+
+
+### Lets see about conditional failing
+
+```yaml
+- hosts: all
+  become: true
+
+  tasks:
+    - name: is folder availlable
+      ansible.builtin.command: "ls /tmp"
+      register: output
+      failed_when: true      
+      ignore_errors: true    
+    - name: print the log      
+      debug:        
+        var: output
+```
+
+here you see the "ls /tmp" will work but i conditionally said it is failing by using "failed_when" by setting to true and i also added "ignore_error" to move to next step even after failure to print the output
+
+if you see the out put in the stdout you can see the folders which are present under /tmp
+
+i used it fail the task but it can also be used in opposite way
+
+lets say you dont want to consider a step failed unless it matches a specific error output like below
+
+```yaml
+
+- hosts: all
+  become: true
+
+  tasks:
+    - name: is folder availlable
+      ansible.builtin.command: "ls /tmp/itisnotthere"
+      register: output
+      failed_when: "'No such' not in output.stderr"
+#      ignore_errors: true
+    - name: print the log
+      debug:
+        var: output
+```
+
+the first task is stil errors but i am saying no it okay if the folder is not present, so its moving on to the next step
