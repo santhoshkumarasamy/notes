@@ -33,3 +33,8 @@ the process of preparing an instance with configuration data for the opeartion s
 ```
 You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring the ec2 instance with same private ip, public ip and metadata & same placement group
 ```
+#### EC2 AMI
+
+- Specific to a region but can be copied accross
+- Public AMI(AWS Provided), Your own ami, Marketplace AMI
+- start and customize your ec2,stop it for data integrity, build a ami(EBS Snapshot) and finally create a ec2 instnace
