@@ -38,3 +38,8 @@ You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring th
 - Specific to a region but can be copied accross
 - Public AMI(AWS Provided), Your own ami, Marketplace AMI
 - start and customize your ec2,stop it for data integrity, build a ami(EBS Snapshot) and finally create a ec2 instnace
+
+- AMI No reboot option is used to create an emi when the ec2 is running without this aws will first stop the instance, create a ebs snapshot then create a ami from the ebs snapshot
+- when you want to share a AMI with other aws account you either share a unencrypted ami or you need ot share the customer managed key along with the encryted ami : it dosnt allow aws owned keys
+- you can also copy the ami from one account to another
+- you can force users to use only a handful of ami for the instance -apply tag to the ami and put a condition that no instance should be created that doesnt have the tag
