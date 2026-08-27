@@ -43,3 +43,16 @@ You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring th
 - when you want to share a AMI with other aws account you either share a unencrypted ami or you need ot share the customer managed key along with the encryted ami : it dosnt allow aws owned keys
 - you can also copy the ami from one account to another
 - you can force users to use only a handful of ami for the instance -apply tag to the ami and put a condition that no instance should be created that doesnt have the tag
+
+## SSM
+
+### Documents
+ Basically a steps by steps details which needs to be performed on a instance
+
+### Run Command
+
+- Execute a document(=script) or just run a command on multiple instances
+- No need for ssh
+- command output can be shown in console, sent to s3 or cloud watch
+- notification to sns
+- can be invoked by event bridge
