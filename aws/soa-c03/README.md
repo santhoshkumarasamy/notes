@@ -56,3 +56,92 @@ You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring th
 - command output can be shown in console, sent to s3 or cloud watch
 - notification to sns
 - can be invoked by event bridge
+### Default Host Management Configuration
+
+- When enabled it automatically configure your ec2 instance as managed insthaces without use of the ec2 instance profile
+- **instance identity role** - a type of iam role with no permission beyond identifying the ec2 instance to aws service
+- ec2 instance must have IMDSv2 enables and ssm agent installed 
+- automatically enables session manager,patch manager and inventory
+- automatically keeps the ssm agent up to date
+- must be enable dper aws region
+
+
+### Inventory 
+- Collect metadata from ec2 and on-prem
+- store it in s3
+- cross account data
+- custom metadata
+
+### State Manager
+
+- automate the process of keeping your managed instances in a state that ou define
+- use case: bootstrap instances with software
+- state Manager Association
+    * defines the state that you want to maintain to your managed instance.
+    * specify a schedule when this configuration is applied
+- uses ssm documents to create an assoication 
+### Patch Manager
+
+- Automated the process of patching managed instances
+- os update, applications updates, security updates
+- support ec2 and on-prem
+- linux, mac os and windows
+- patch on-demand or on a schedule using maintenance windows
+- scan instances and generate patch compliance report
+
+#### Patch Baseline
+    - define which patch should and shouldn't be appliend on the instances
+    - ability to create custom patch baselines
+    - patched can be auto-approved
+    - by default, install only critical and security related patches
+#### Patch group
+    - associate a set of instances with specific patch baseline
+    - instances should be defined with the tag key **Patch Group**
+    - an instance can only be in one patch group
+    - patch group can only be registered with one baseline
+
+* Pre-defined Patch Baseline : AWS-RunPatchBaseLine(SSM Document)
+* Custom Patch baselines
+
+
+#### Maintenance Windows
+
+- defines a schedule for when to perform actions on your instaces
+- Maintenance window contains
+    * Schedule
+    * duration
+    * set of registered instances
+    * set of tasks
+
+### session manager
+
+- does not need ssh access
+- allows you to start a secure shell on your ec2 and on premise servers
+- macos, linux and windows
+- session log data can be sent to s3 ro cloudwatch logs
+- cloudtrail can intercept startsession events
+- Need IAM Permission: tags can be used to restrict the access
+
+### SSM Distributer
+
+- package and deploy software to your managed instances
+- you create a **distributor package(ssm document)** and deploy to different platforms
+- Distributor package
+    * contents stored in s3
+    * zip file per target os platform(install script, uninstall script and executable file)
+    * json manifest file that describe the package content
+- use aws-provided packages, 3rd party packages, or create your own package
+- install the package:
+    * one time - AWS Run Command
+    * On a schedule - using state manager
+
+### Ops Center
+
+- allowd you to view, investigate and remediate issues in one place
+- security issues(security hub), performance issues(DynamoDB throttle), failures(ASG failed instance)
+- Reduce meatime to resolve issues
+- OpsItems
+    * Operation issue or interruption that needs investigation and remediation
+    * event, resources, aws config changes, cloud trail logs, eventbridge
+    * provides recommended runbook to resolve the issue
+- support ec2 and on-prem
