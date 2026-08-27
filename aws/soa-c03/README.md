@@ -145,3 +145,10 @@ You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring th
     * event, resources, aws config changes, cloud trail logs, eventbridge
     * provides recommended runbook to resolve the issue
 - support ec2 and on-prem
+
+## High availability and scalability 
+
+- Classic
+- Application - HTTP, HTTPS , Web Socket - Application layer(7)
+- Network - TCP, TLS, UDP - Transport Layer (4)
+- Gateway - Layer 3(network layer)
