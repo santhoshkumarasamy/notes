@@ -149,6 +149,6 @@ You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring th
 ## High availability and scalability 
 
 - Classic
-- Application - HTTP, HTTPS , Web Socket - Application layer(7)
+- Application - HTTP, HTTPS , Web Socket - Application layer(7) - path, hostname, queary string & headers
 - Network - TCP, TLS, UDP - Transport Layer (4)
 - Gateway - Layer 3(network layer)
