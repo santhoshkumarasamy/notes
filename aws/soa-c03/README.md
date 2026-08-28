@@ -152,3 +152,24 @@ You can trigger `Recover EC2 Instace` from cloud watch alarm which will bring th
 - Application - HTTP, HTTPS , Web Socket - Application layer(7) - path, hostname, queary string & headers
 - Network - TCP, TLS, UDP - Transport Layer (4)
 - Gateway - Layer 3(network layer)
+
+
+### NLB
+
+- TCP and UDP Traffic : Millions of request per sec: ultra low latency
+- One Static IP per AZ and supports assigning elastic IP
+- layer 4
+- target group
+    - Ec2 instances
+    - IP Address -> must be private ip (outpost)
+    - Application Load Balancer
+    - Health check supports tcp, http and https
+
+### Gateway load Balancer
+- layer 3 - network layer
+- its like a middleware between the end user and the application
+- you can use it to route the traffic to monitor it 
+- uses GENEVE protocol on port 6081
+- target group
+    - EC2 instance
+    - Private IP
